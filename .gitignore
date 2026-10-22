@@ -4,6 +4,3 @@ node_modules
 src/locales
 build
 i18n
-
-# OS
-.DS_Store
