@@ -4,21 +4,23 @@ A DHIS2 App that gives admins a browser-based way to configure, trigger, and rev
 
 This app does not detect anything itself. It is a control panel for an engine that already exists, the same relationship [FHIR Sync Console](https://github.com/khalilurrrahmanridoykhan/dhis2-fhir-sync-console) has to [its own CLI](https://github.com/khalilurrrahmanridoykhan/dhis2-fhir-aggregate-pipeline): DHIS2 makes the outbound call server-side through a DHIS2 Route, so no credential for the external service is ever held client-side.
 
-## Status: not started
+## Status: built locally, not yet live-verified
 
-Outbreak Signal Service is currently at **Phase 1 of 7** of its own build (scaffold and three database tables — `org_unit`, `series`, `observation` — plus the public repository setup). It has no DHIS2 sync, no detection engine, and no Alerts REST API yet.
+Outbreak Signal Service itself is now **done — all 7 phases, `v0.1.0` released**, which is what unblocked this app (see [`docs/PLAN.md`](docs/PLAN.md) for the original gating plan). Settings (Route picker/creator), Trigger (sync + detection run), and Alerts (browse, filter, paginate, and acknowledge/resolve/dismiss with full review history) are all built and compile clean (`npm run build`).
 
-This app cannot be meaningfully built against a backend that has nothing to configure and nothing to show. The full plan — including exactly which phase of this app depends on which phase of the backend, and why — is in [`docs/PLAN.md`](docs/PLAN.md). Build work on this repository starts once that document's own gating conditions are met, not on a calendar date.
+**Not yet done:** a real end-to-end run against an actual DHIS2 instance with a real Route to a real running Outbreak Signal Service. That needs a DHIS2 instance that can reach the backend over the network (not just `localhost` on one machine — see the Route's own base-URL requirement below), which this repository doesn't assume access to on its own. Every other app in this portfolio treats that live click-through as the real "done," not a clean build — this one isn't there yet.
 
-## What it will do, once unblocked
+One real architectural finding, confirmed live against the backend's own default local Keycloak profile while building this: Outbreak Signal Service's real JWTs expire in 5 minutes. A DHIS2 Route's bearer-token auth config holds one fixed string and cannot refresh itself, so this app can only ever be as fresh as whatever token was last pasted into the Route. Workable for a service-account token configured for a long lifetime at the identity-provider level, with manual rotation when it does expire — the same accepted limitation [FHIR Sync Console](https://github.com/khalilurrrahmanridoykhan/dhis2-fhir-sync-console) already documents for its own static tokens, not a new problem this app invented.
+
+There is also no `series`-mapping screen, unlike the original plan's assumption: `GET /api/v1/series` is read-only (Outbreak Signal Service decides what it syncs from its own `outbreak.dhis2.*` configuration, not from a mapping built in a DHIS2 App), so Settings only needs the Route.
+
+## Screens
 
 | Screen | What it does |
 |---|---|
-| Settings | Pick or create the Route to Outbreak Signal Service. Map DHIS2 datasets/data elements to the backend's `series`. |
-| Trigger | Manually run a sync or a detection pass, with the resulting run's status shown inline. |
-| Alert list | Browse alerts, filterable by status, org unit, algorithm, and date. |
-| Alert detail | An alert's full event history, with acknowledge/resolve/dismiss actions. |
-| Review history | Past detection runs — which algorithm, which parameters, when. |
+| Settings | Pick or create the Route to Outbreak Signal Service. |
+| Trigger | Run a sync or a detection pass on demand, with the result shown inline. |
+| Alerts | Browse alerts filterable by status, paginated; open one to see its full review history and acknowledge/resolve/dismiss it (dismiss requires a reason; an illegal transition surfaces the backend's own 409, not a generic error). |
 
 ## License
 
