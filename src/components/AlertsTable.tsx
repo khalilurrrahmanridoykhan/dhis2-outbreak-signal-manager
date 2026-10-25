@@ -47,61 +47,71 @@ export function AlertsTable({ routeId, alerts, seriesOptions, onSelect }: Props)
 
   return (
     <div>
-      <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap', alignItems: 'flex-end' }}>
-        <SingleSelectField
-          label={i18n.t('Status')}
-          clearable
-          selected={f.status ?? ''}
-          onChange={({ selected }) => alerts.setFilters({ ...f, status: (selected as AlertStatus) || undefined, page: 0 })}
-        >
-          {STATUSES.map((s) => (
-            <SingleSelectOption key={s} value={s} label={s} />
-          ))}
-        </SingleSelectField>
+      <div style={{ display: 'flex', gap: 16, marginBottom: 16, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+        <div style={{ minWidth: 150 }}>
+          <SingleSelectField
+            label={i18n.t('Status')}
+            clearable
+            selected={f.status ?? ''}
+            onChange={({ selected }) => alerts.setFilters({ ...f, status: (selected as AlertStatus) || undefined, page: 0 })}
+          >
+            {STATUSES.map((s) => (
+              <SingleSelectOption key={s} value={s} label={s} />
+            ))}
+          </SingleSelectField>
+        </div>
 
-        <SingleSelectField
-          label={i18n.t('Org unit')}
-          clearable
-          selected={f.orgUnitId ? String(f.orgUnitId) : ''}
-          onChange={({ selected }) => alerts.setFilters({ ...f, orgUnitId: selected ? Number(selected) : undefined, page: 0 })}
-        >
-          {seriesOptions.orgUnits.map((ou) => (
-            <SingleSelectOption key={ou.id} value={String(ou.id)} label={ou.name} />
-          ))}
-        </SingleSelectField>
+        <div style={{ minWidth: 220 }}>
+          <SingleSelectField
+            label={i18n.t('Org unit')}
+            clearable
+            selected={f.orgUnitId ? String(f.orgUnitId) : ''}
+            onChange={({ selected }) => alerts.setFilters({ ...f, orgUnitId: selected ? Number(selected) : undefined, page: 0 })}
+          >
+            {seriesOptions.orgUnits.map((ou) => (
+              <SingleSelectOption key={ou.id} value={String(ou.id)} label={ou.name} />
+            ))}
+          </SingleSelectField>
+        </div>
 
-        <SingleSelectField
-          label={i18n.t('Algorithm')}
-          clearable
-          selected={f.algorithm ?? ''}
-          onChange={({ selected }) => alerts.setFilters({ ...f, algorithm: selected || undefined, page: 0 })}
-        >
-          {ALGORITHMS.map((a) => (
-            <SingleSelectOption key={a} value={a} label={a} />
-          ))}
-        </SingleSelectField>
+        <div style={{ minWidth: 180 }}>
+          <SingleSelectField
+            label={i18n.t('Algorithm')}
+            clearable
+            selected={f.algorithm ?? ''}
+            onChange={({ selected }) => alerts.setFilters({ ...f, algorithm: selected || undefined, page: 0 })}
+          >
+            {ALGORITHMS.map((a) => (
+              <SingleSelectOption key={a} value={a} label={a} />
+            ))}
+          </SingleSelectField>
+        </div>
 
-        <SingleSelectField
-          label={i18n.t('Data element')}
-          clearable
-          selected={f.dataElement ?? ''}
-          onChange={({ selected }) => alerts.setFilters({ ...f, dataElement: selected || undefined, page: 0 })}
-        >
-          {seriesOptions.dataElements.map((name) => (
-            <SingleSelectOption key={name} value={name} label={name} />
-          ))}
-        </SingleSelectField>
+        <div style={{ minWidth: 220 }}>
+          <SingleSelectField
+            label={i18n.t('Data element')}
+            clearable
+            selected={f.dataElement ?? ''}
+            onChange={({ selected }) => alerts.setFilters({ ...f, dataElement: selected || undefined, page: 0 })}
+          >
+            {seriesOptions.dataElements.map((name) => (
+              <SingleSelectOption key={name} value={name} label={name} />
+            ))}
+          </SingleSelectField>
+        </div>
 
-        <SingleSelectField
-          label={i18n.t('Severity')}
-          clearable
-          selected={f.severity ?? ''}
-          onChange={({ selected }) => alerts.setFilters({ ...f, severity: (selected as Severity) || undefined, page: 0 })}
-        >
-          {SEVERITIES.map((s) => (
-            <SingleSelectOption key={s} value={s} label={s} />
-          ))}
-        </SingleSelectField>
+        <div style={{ minWidth: 150 }}>
+          <SingleSelectField
+            label={i18n.t('Severity')}
+            clearable
+            selected={f.severity ?? ''}
+            onChange={({ selected }) => alerts.setFilters({ ...f, severity: (selected as Severity) || undefined, page: 0 })}
+          >
+            {SEVERITIES.map((s) => (
+              <SingleSelectOption key={s} value={s} label={s} />
+            ))}
+          </SingleSelectField>
+        </div>
 
         <InputField
           label={i18n.t('Period from')}
@@ -116,15 +126,17 @@ export function AlertsTable({ routeId, alerts, seriesOptions, onSelect }: Props)
           onChange={({ value }) => alerts.setFilters({ ...f, to: value || undefined, page: 0 })}
         />
 
-        <SingleSelectField
-          label={i18n.t('Sort')}
-          selected={f.sort ?? ''}
-          onChange={({ selected }) => alerts.setFilters({ ...f, sort: selected || undefined, page: 0 })}
-        >
-          {SORT_OPTIONS.map((opt) => (
-            <SingleSelectOption key={opt.label} value={opt.value ?? ''} label={opt.label} />
-          ))}
-        </SingleSelectField>
+        <div style={{ minWidth: 190 }}>
+          <SingleSelectField
+            label={i18n.t('Sort')}
+            selected={f.sort ?? ''}
+            onChange={({ selected }) => alerts.setFilters({ ...f, sort: selected || undefined, page: 0 })}
+          >
+            {SORT_OPTIONS.map((opt) => (
+              <SingleSelectOption key={opt.label} value={opt.value ?? ''} label={opt.label} />
+            ))}
+          </SingleSelectField>
+        </div>
       </div>
 
       {alerts.loading && <CircularLoader small />}

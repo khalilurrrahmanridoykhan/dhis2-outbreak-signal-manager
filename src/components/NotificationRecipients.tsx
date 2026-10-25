@@ -35,12 +35,14 @@ export function NotificationRecipients({ recipients, seriesOptions }: Props) {
         )}
       </p>
 
-      <section style={{ display: 'flex', gap: 12, alignItems: 'flex-end', flexWrap: 'wrap' }}>
-        <SingleSelectField label={i18n.t('Org unit')} selected={orgUnitId} onChange={({ selected }) => setOrgUnitId(selected)}>
-          {seriesOptions.orgUnits.map((ou) => (
-            <SingleSelectOption key={ou.id} value={String(ou.id)} label={ou.name} />
-          ))}
-        </SingleSelectField>
+      <section style={{ display: 'flex', gap: 16, alignItems: 'flex-end', flexWrap: 'wrap' }}>
+        <div style={{ minWidth: 220 }}>
+          <SingleSelectField label={i18n.t('Org unit')} selected={orgUnitId} onChange={({ selected }) => setOrgUnitId(selected)}>
+            {seriesOptions.orgUnits.map((ou) => (
+              <SingleSelectOption key={ou.id} value={String(ou.id)} label={ou.name} />
+            ))}
+          </SingleSelectField>
+        </div>
         <InputField label={i18n.t('Email')} value={email} onChange={({ value }) => setEmail(value ?? '')} />
         <Button primary small disabled={!orgUnitId || !email.trim()} loading={adding} onClick={handleAdd}>
           {i18n.t('Add')}

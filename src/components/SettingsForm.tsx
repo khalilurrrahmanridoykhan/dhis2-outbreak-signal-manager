@@ -107,11 +107,13 @@ function RoutePicker({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       {route.wildcardRoutes.length > 0 ? (
-        <SingleSelectField label={i18n.t('Route')} selected={selectedRouteId ?? ''} onChange={({ selected }) => onSelect(selected)}>
-          {route.wildcardRoutes.map((r) => (
-            <SingleSelectOption key={r.id} value={r.id} label={r.name} />
-          ))}
-        </SingleSelectField>
+        <div style={{ minWidth: 260, maxWidth: 420 }}>
+          <SingleSelectField label={i18n.t('Route')} selected={selectedRouteId ?? ''} onChange={({ selected }) => onSelect(selected)}>
+            {route.wildcardRoutes.map((r) => (
+              <SingleSelectOption key={r.id} value={r.id} label={r.name} />
+            ))}
+          </SingleSelectField>
+        </div>
       ) : (
         <NoticeBox title={i18n.t('No routes to Outbreak Signal Service found yet')}>
           {i18n.t('Set one up in the Route Manager app, or create one here.')}
