@@ -3,10 +3,12 @@ import { useState } from 'react'
 import { AlertDetailPanel } from './components/AlertDetailPanel'
 import { AlertsTable } from './components/AlertsTable'
 import { ErrorBoundary } from './components/ErrorBoundary'
+import { NotificationRecipients } from './components/NotificationRecipients'
 import { SettingsForm } from './components/SettingsForm'
 import { TriggerPanel } from './components/TriggerPanel'
 import { useAlerts } from './hooks/useAlerts'
 import { useCurrentUserAuthorities } from './hooks/useCurrentUserAuthorities'
+import { useNotificationRecipients } from './hooks/useNotificationRecipients'
 import { useRoute } from './hooks/useRoute'
 import { useSeriesOptions } from './hooks/useSeriesOptions'
 import { useSettings } from './hooks/useSettings'
@@ -21,7 +23,7 @@ export default function App() {
   )
 }
 
-type TabKey = 'settings' | 'alerts'
+type TabKey = 'settings' | 'alerts' | 'notifications'
 
 function AppContent() {
   const authorities = useCurrentUserAuthorities()
@@ -30,6 +32,7 @@ function AppContent() {
   const trigger = useTrigger()
   const alerts = useAlerts(settings.routeId)
   const seriesOptions = useSeriesOptions(settings.routeId)
+  const notificationRecipients = useNotificationRecipients(settings.routeId)
   const [selectedAlertId, setSelectedAlertId] = useState<number | null>(null)
   const [tab, setTab] = useState<TabKey>('settings')
 
@@ -52,6 +55,9 @@ function AppContent() {
         </Tab>
         <Tab selected={tab === 'alerts'} disabled={!ready} onClick={() => ready && setTab('alerts')}>
           {i18n.t('Alerts')}
+        </Tab>
+        <Tab selected={tab === 'notifications'} disabled={!ready} onClick={() => ready && setTab('notifications')}>
+          {i18n.t('Notifications')}
         </Tab>
       </TabBar>
 
@@ -93,6 +99,13 @@ function AppContent() {
               )}
             </section>
           </div>
+        )}
+
+        {tab === 'notifications' && ready && (
+          <section>
+            <h2>{i18n.t('Notifications')}</h2>
+            <NotificationRecipients recipients={notificationRecipients} seriesOptions={seriesOptions} />
+          </section>
         )}
       </div>
     </div>
