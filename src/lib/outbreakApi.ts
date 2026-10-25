@@ -134,11 +134,30 @@ export class OutbreakApiError extends Error {
   }
 }
 
+// Query values are encoded TWICE -- confirmed live, not a guess: DHIS2's own
+// RouteService.getQueryParams() takes the incoming (already-encoded) query
+// string, URL-DECODES it once, then hands that decoded string straight to
+// UriComponentsBuilder.fromUriString() as if it were still encoded. Any
+// value containing a space (or other char needing encoding) -- "IDSR
+// Measles", say -- comes out the other side of that decode as a raw,
+// un-encoded space sitting inside a URI being re-parsed, which DHIS2 itself
+// rejects with a 400 before this app's own backend ever sees the request.
+// Encoding once (the normal, correct thing to do) reproduces that 400 both
+// with "+"- and "%20"-style spaces -- confirmed by testing both directly
+// against a real Route. Encoding twice survives DHIS2's own extra decode
+// pass and arrives at the backend as the single, correctly-decoded value --
+// also confirmed live, both that it stops 400ing and that the filter
+// actually matches on the intended value, not some double-decoded garbage.
+// A value with no characters that need encoding (an org unit id, an
+// algorithm name, a status) is unaffected either way -- encodeURIComponent
+// is idempotent on already-safe strings -- so this is applied uniformly,
+// not just to the parameters that happen to need it today.
 function runUrl(routeId: string, subPath: string, params: Record<string, string | number | undefined>): string {
   const path = subPath ? `/api/routes/${routeId}/run/${subPath}` : `/api/routes/${routeId}/run`
-  const query = new URLSearchParams(
-    Object.fromEntries(Object.entries(params).filter(([, v]) => v !== undefined).map(([k, v]) => [k, String(v)])),
-  ).toString()
+  const query = Object.entries(params)
+    .filter(([, v]) => v !== undefined)
+    .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(encodeURIComponent(String(v)))}`)
+    .join('&')
   return `${window.location.origin}${path}${query ? `?${query}` : ''}`
 }
 
