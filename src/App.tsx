@@ -1,4 +1,4 @@
-import { CircularLoader } from '@dhis2/ui'
+import { CircularLoader, Tab, TabBar } from '@dhis2/ui'
 import { useState } from 'react'
 import { AlertDetailPanel } from './components/AlertDetailPanel'
 import { AlertsTable } from './components/AlertsTable'
@@ -8,6 +8,7 @@ import { TriggerPanel } from './components/TriggerPanel'
 import { useAlerts } from './hooks/useAlerts'
 import { useCurrentUserAuthorities } from './hooks/useCurrentUserAuthorities'
 import { useRoute } from './hooks/useRoute'
+import { useSeriesOptions } from './hooks/useSeriesOptions'
 import { useSettings } from './hooks/useSettings'
 import { useTrigger } from './hooks/useTrigger'
 import i18n from './i18n'
@@ -20,13 +21,17 @@ export default function App() {
   )
 }
 
+type TabKey = 'settings' | 'alerts'
+
 function AppContent() {
   const authorities = useCurrentUserAuthorities()
   const { settings, loading: settingsLoading, saveSettings } = useSettings()
   const route = useRoute()
   const trigger = useTrigger()
   const alerts = useAlerts(settings.routeId)
+  const seriesOptions = useSeriesOptions(settings.routeId)
   const [selectedAlertId, setSelectedAlertId] = useState<number | null>(null)
+  const [tab, setTab] = useState<TabKey>('settings')
 
   if (settingsLoading || authorities.loading) {
     return (
@@ -37,43 +42,59 @@ function AppContent() {
   }
 
   const ready = Boolean(settings.routeId)
+  const routeId = settings.routeId as string
 
   return (
-    <div style={{ padding: 24, maxWidth: 900, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 32 }}>
-      <section>
-        <h2>{i18n.t('Settings')}</h2>
-        <SettingsForm settings={settings} onSave={saveSettings} authorities={authorities} route={route} />
-      </section>
+    <div style={{ display: 'flex', flexDirection: 'column' }}>
+      <TabBar>
+        <Tab selected={tab === 'settings'} onClick={() => setTab('settings')}>
+          {i18n.t('Settings')}
+        </Tab>
+        <Tab selected={tab === 'alerts'} disabled={!ready} onClick={() => ready && setTab('alerts')}>
+          {i18n.t('Alerts')}
+        </Tab>
+      </TabBar>
 
-      {ready && (
-        <>
+      <div style={{ padding: 24, maxWidth: 1000, margin: '0 auto', width: '100%', boxSizing: 'border-box' }}>
+        {tab === 'settings' && (
           <section>
-            <h2>{i18n.t('Trigger')}</h2>
-            <TriggerPanel
-              routeId={settings.routeId as string}
-              trigger={trigger}
-              onSyncComplete={() => {}}
-              onDetectionComplete={() => alerts.refresh()}
-            />
-          </section>
-
-          <section>
-            <h2>{i18n.t('Alerts')}</h2>
-            {selectedAlertId === null ? (
-              <AlertsTable alerts={alerts} onSelect={setSelectedAlertId} />
-            ) : (
-              <AlertDetailPanel
-                routeId={settings.routeId as string}
-                alertId={selectedAlertId}
-                onClose={() => setSelectedAlertId(null)}
-                onChanged={() => alerts.refresh()}
-              />
+            <SettingsForm settings={settings} onSave={saveSettings} authorities={authorities} route={route} />
+            {!ready && (
+              <p style={{ color: '#6e7a89', marginTop: 16 }}>
+                {i18n.t('Pick or create a route to Outbreak Signal Service above to get started.')}
+              </p>
             )}
           </section>
-        </>
-      )}
+        )}
 
-      {!ready && <p style={{ color: '#6e7a89' }}>{i18n.t('Pick or create a route to Outbreak Signal Service above to get started.')}</p>}
+        {tab === 'alerts' && ready && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
+            <section>
+              <h2>{i18n.t('Trigger')}</h2>
+              <TriggerPanel
+                routeId={routeId}
+                trigger={trigger}
+                onSyncComplete={() => {}}
+                onDetectionComplete={() => alerts.refresh()}
+              />
+            </section>
+
+            <section>
+              <h2>{i18n.t('Alerts')}</h2>
+              {selectedAlertId === null ? (
+                <AlertsTable routeId={routeId} alerts={alerts} seriesOptions={seriesOptions} onSelect={setSelectedAlertId} />
+              ) : (
+                <AlertDetailPanel
+                  routeId={routeId}
+                  alertId={selectedAlertId}
+                  onClose={() => setSelectedAlertId(null)}
+                  onChanged={() => alerts.refresh()}
+                />
+              )}
+            </section>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
