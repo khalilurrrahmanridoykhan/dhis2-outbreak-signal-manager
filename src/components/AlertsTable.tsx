@@ -1,8 +1,10 @@
 import { Button, CircularLoader, InputField, NoticeBox, SingleSelectField, SingleSelectOption } from '@dhis2/ui'
+import { useState } from 'react'
 import { useObservations } from '../hooks/useObservations'
 import type { UseAlertsResult } from '../hooks/useAlerts'
 import type { UseSeriesOptionsResult } from '../hooks/useSeriesOptions'
 import type { AlertStatus, AlertSummary, Severity } from '../lib/outbreakApi'
+import { OrgUnitAlertsTable } from './OrgUnitAlertsTable'
 import { Sparkline } from './Sparkline'
 import i18n from './../i18n'
 
@@ -27,6 +29,21 @@ interface Props {
 
 export function AlertsTable({ routeId, alerts, seriesOptions, onSelect }: Props) {
   const f = alerts.filters
+  const [drillDown, setDrillDown] = useState<{ id: number; name: string } | null>(null)
+
+  if (drillDown) {
+    return (
+      <OrgUnitAlertsTable
+        routeId={routeId}
+        orgUnitId={drillDown.id}
+        orgUnitName={drillDown.name}
+        from={f.from}
+        to={f.to}
+        onSelectAlert={onSelect}
+        onClose={() => setDrillDown(null)}
+      />
+    )
+  }
 
   return (
     <div>
@@ -138,7 +155,13 @@ export function AlertsTable({ routeId, alerts, seriesOptions, onSelect }: Props)
             </thead>
             <tbody>
               {alerts.page.content.map((alert) => (
-                <AlertRow key={alert.id} routeId={routeId} alert={alert} onSelect={onSelect} />
+                <AlertRow
+                  key={alert.id}
+                  routeId={routeId}
+                  alert={alert}
+                  onSelect={onSelect}
+                  onOrgUnitClick={(id, name) => setDrillDown({ id, name })}
+                />
               ))}
             </tbody>
           </table>
@@ -172,7 +195,17 @@ export function AlertsTable({ routeId, alerts, seriesOptions, onSelect }: Props)
   )
 }
 
-function AlertRow({ routeId, alert, onSelect }: { routeId: string; alert: AlertSummary; onSelect: (id: number) => void }) {
+function AlertRow({
+  routeId,
+  alert,
+  onSelect,
+  onOrgUnitClick,
+}: {
+  routeId: string
+  alert: AlertSummary
+  onSelect: (id: number) => void
+  onOrgUnitClick: (orgUnitId: number, orgUnitName: string) => void
+}) {
   // Last ~12 weeks leading up to (and including) this alert's own period --
   // enough to see the shape of the rise without fetching the series' whole
   // history for every visible row.
@@ -184,7 +217,18 @@ function AlertRow({ routeId, alert, onSelect }: { routeId: string; alert: AlertS
 
   return (
     <tr style={{ borderBottom: '1px solid #f0f3f5', cursor: 'pointer' }} onClick={() => onSelect(alert.id)}>
-      <td style={{ padding: '4px 8px' }}>{alert.orgUnitName}</td>
+      <td style={{ padding: '4px 8px' }}>
+        <span
+          style={{ cursor: 'pointer', textDecoration: 'underline', textDecorationStyle: 'dotted' }}
+          title={i18n.t('See every algorithm for this org unit')}
+          onClick={(e) => {
+            e.stopPropagation()
+            onOrgUnitClick(alert.orgUnitId, alert.orgUnitName)
+          }}
+        >
+          {alert.orgUnitName}
+        </span>
+      </td>
       <td style={{ padding: '4px 8px' }}>{alert.dataElementName}</td>
       <td style={{ padding: '4px 8px' }}>{alert.algorithm}</td>
       <td style={{ padding: '4px 8px' }}>{alert.periodStart}</td>
