@@ -1,7 +1,9 @@
 import { Button, CircularLoader, NoticeBox } from '@dhis2/ui'
 import { useEffect, useState } from 'react'
+import { useObservations } from '../hooks/useObservations'
 import { listAlerts, type AlertSummary, type Severity } from '../lib/outbreakApi'
 import i18n from '../i18n'
+import { Sparkline } from './Sparkline'
 
 const SEVERITY_COLOR: Record<Severity, string> = { HIGH: '#c22a2a', MEDIUM: '#b95000', LOW: '#6e7a89' }
 
@@ -80,29 +82,51 @@ export function OrgUnitAlertsTable({ routeId, orgUnitId, orgUnitName, from, to, 
               <th style={{ padding: '4px 8px' }}>{i18n.t('Data element')}</th>
               <th style={{ padding: '4px 8px' }}>{i18n.t('Score')}</th>
               <th style={{ padding: '4px 8px' }}>{i18n.t('Severity')}</th>
+              <th style={{ padding: '4px 8px' }}>{i18n.t('Trend')}</th>
               <th style={{ padding: '4px 8px' }}>{i18n.t('Status')}</th>
             </tr>
           </thead>
           <tbody>
             {rows.map((alert) => (
-              <tr
-                key={alert.id}
-                style={{ borderBottom: '1px solid #f0f3f5', cursor: 'pointer' }}
-                onClick={() => onSelectAlert(alert.id)}
-              >
-                <td style={{ padding: '4px 8px' }}>{alert.periodStart}</td>
-                <td style={{ padding: '4px 8px' }}>{alert.algorithm}</td>
-                <td style={{ padding: '4px 8px' }}>{alert.dataElementName}</td>
-                <td style={{ padding: '4px 8px' }}>
-                  {alert.score} / {alert.threshold}
-                </td>
-                <td style={{ padding: '4px 8px', color: SEVERITY_COLOR[alert.severity] }}>{alert.severity}</td>
-                <td style={{ padding: '4px 8px' }}>{alert.status}</td>
-              </tr>
+              <OrgUnitAlertRow key={alert.id} routeId={routeId} alert={alert} onSelectAlert={onSelectAlert} />
             ))}
           </tbody>
         </table>
       )}
     </div>
+  )
+}
+
+function OrgUnitAlertRow({
+  routeId,
+  alert,
+  onSelectAlert,
+}: {
+  routeId: string
+  alert: AlertSummary
+  onSelectAlert: (id: number) => void
+}) {
+  // Same "last ~12 weeks up to this alert's own period" window as the main
+  // table's own per-row sparkline (see AlertsTable.tsx's AlertRow).
+  const { observations } = useObservations(routeId, alert.seriesId)
+  const trend = observations
+    .filter((o) => o.weekStart <= alert.periodStart)
+    .slice(-12)
+    .map((o) => Number(o.value))
+
+  return (
+    <tr style={{ borderBottom: '1px solid #f0f3f5', cursor: 'pointer' }} onClick={() => onSelectAlert(alert.id)}>
+      <td style={{ padding: '4px 8px' }}>{alert.periodStart}</td>
+      <td style={{ padding: '4px 8px' }}>{alert.algorithm}</td>
+      <td style={{ padding: '4px 8px' }}>{alert.dataElementName}</td>
+      <td style={{ padding: '4px 8px' }}>
+        {alert.score} / {alert.threshold}
+      </td>
+      <td style={{ padding: '4px 8px', color: SEVERITY_COLOR[alert.severity] }}>{alert.severity}</td>
+      <td style={{ padding: '4px 8px' }}>
+        <Sparkline values={trend} color={SEVERITY_COLOR[alert.severity]} />
+      </td>
+      <td style={{ padding: '4px 8px' }}>{alert.status}</td>
+    </tr>
   )
 }
