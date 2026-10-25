@@ -60,6 +60,13 @@ export interface AlertDetail {
   history: AlertEventSummary[]
 }
 
+export interface NotificationRecipient {
+  id: number
+  orgUnitId: number
+  email: string
+  createdAt: string
+}
+
 export interface Page<T> {
   content: T[]
   totalElements: number
@@ -137,7 +144,7 @@ function runUrl(routeId: string, subPath: string, params: Record<string, string 
 
 async function request<T>(
   routeId: string,
-  method: 'GET' | 'POST',
+  method: 'GET' | 'POST' | 'DELETE',
   subPath: string,
   params: Record<string, string | number | undefined> = {},
   body?: unknown,
@@ -187,6 +194,18 @@ export function listAllSeries(routeId: string): Promise<SeriesSummary[]> {
 
 export function getObservations(routeId: string, seriesId: number): Promise<ObservationSummary[]> {
   return request<ObservationSummary[]>(routeId, 'GET', `api/v1/series/${seriesId}/observations`)
+}
+
+export function listNotificationRecipients(routeId: string, orgUnitId?: number): Promise<NotificationRecipient[]> {
+  return request<NotificationRecipient[]>(routeId, 'GET', 'api/v1/notification-recipients', { orgUnitId })
+}
+
+export function createNotificationRecipient(routeId: string, orgUnitId: number, email: string): Promise<NotificationRecipient> {
+  return request<NotificationRecipient>(routeId, 'POST', 'api/v1/notification-recipients', {}, { orgUnitId, email })
+}
+
+export function deleteNotificationRecipient(routeId: string, id: number): Promise<void> {
+  return request<void>(routeId, 'DELETE', `api/v1/notification-recipients/${id}`)
 }
 
 export function getAlert(routeId: string, id: number): Promise<AlertDetail> {
