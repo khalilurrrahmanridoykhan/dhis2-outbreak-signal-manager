@@ -1,8 +1,12 @@
 import { Button, CircularLoader, InputField, NoticeBox } from '@dhis2/ui'
 import { useCallback, useEffect, useState } from 'react'
 import { useAlertActions } from '../hooks/useAlertActions'
+import { useObservations } from '../hooks/useObservations'
 import i18n from '../i18n'
-import { getAlert, OutbreakApiError, type AlertDetail, type AlertSummary } from '../lib/outbreakApi'
+import { getAlert, OutbreakApiError, type AlertDetail, type AlertSummary, type Severity } from '../lib/outbreakApi'
+import { ObservationChart } from './ObservationChart'
+
+const SEVERITY_COLOR: Record<Severity, string> = { HIGH: '#c22a2a', MEDIUM: '#b95000', LOW: '#6e7a89' }
 
 interface Props {
   routeId: string
@@ -18,6 +22,7 @@ export function AlertDetailPanel({ routeId, alertId, onClose, onChanged }: Props
   const [dismissReason, setDismissReason] = useState('')
   const [showDismiss, setShowDismiss] = useState(false)
   const actions = useAlertActions()
+  const observations = useObservations(routeId, detail?.alert.seriesId ?? null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -81,6 +86,24 @@ export function AlertDetailPanel({ routeId, alertId, onClose, onChanged }: Props
         <dt style={{ color: '#6e7a89' }}>{i18n.t('Status')}</dt>
         <dd style={{ margin: 0 }}>{alert.status}</dd>
       </dl>
+
+      <div>
+        <h4 style={{ margin: '0 0 8px' }}>{i18n.t('Weekly values over time')}</h4>
+        {observations.loading && <CircularLoader small />}
+        {observations.error && (
+          <NoticeBox error title={i18n.t('Could not load the chart')}>
+            {observations.error}
+          </NoticeBox>
+        )}
+        {!observations.loading && !observations.error && (
+          <ObservationChart
+            observations={observations.observations}
+            highlightWeekStart={alert.periodStart}
+            threshold={Number(alert.threshold)}
+            color={SEVERITY_COLOR[alert.severity]}
+          />
+        )}
+      </div>
 
       {actions.error && (
         <NoticeBox error title={i18n.t('Action failed')}>

@@ -18,6 +18,7 @@ export type Severity = 'LOW' | 'MEDIUM' | 'HIGH'
 
 export interface AlertSummary {
   id: number
+  seriesId: number
   orgUnitId: number
   orgUnitName: string
   dataElementName: string
@@ -29,6 +30,21 @@ export interface AlertSummary {
   status: AlertStatus
   version: number
   createdAt: string
+}
+
+export interface ObservationSummary {
+  weekStart: string
+  value: string
+  fetchedAt: string
+}
+
+export interface SeriesSummary {
+  id: number
+  orgUnitId: number
+  orgUnitName: string
+  dhis2DataElementUid: string
+  name: string
+  frequency: string
 }
 
 export interface AlertEventSummary {
@@ -56,8 +72,12 @@ export interface AlertFilters {
   status?: AlertStatus
   algorithm?: string
   orgUnitId?: number
+  dataElement?: string
+  severity?: Severity
   from?: string
   to?: string
+  /** Spring Data's own "property,direction" shape, e.g. "score,desc". */
+  sort?: string
   page?: number
   size?: number
 }
@@ -148,11 +168,25 @@ export function listAlerts(routeId: string, filters: AlertFilters): Promise<Page
     status: filters.status,
     algorithm: filters.algorithm,
     orgUnitId: filters.orgUnitId,
+    dataElement: filters.dataElement,
+    severity: filters.severity,
     from: filters.from,
     to: filters.to,
+    sort: filters.sort,
     page: filters.page ?? 0,
     size: filters.size ?? 20,
   })
+}
+
+/** All series, unpaged -- used to build the Org unit / Data element filter
+ * options from real values rather than a hand-maintained list. ~500 series
+ * in the reference deployment, small enough to fetch in one call. */
+export function listAllSeries(routeId: string): Promise<SeriesSummary[]> {
+  return request<Page<SeriesSummary>>(routeId, 'GET', 'api/v1/series', { size: 2000 }).then((page) => page.content)
+}
+
+export function getObservations(routeId: string, seriesId: number): Promise<ObservationSummary[]> {
+  return request<ObservationSummary[]>(routeId, 'GET', `api/v1/series/${seriesId}/observations`)
 }
 
 export function getAlert(routeId: string, id: number): Promise<AlertDetail> {
